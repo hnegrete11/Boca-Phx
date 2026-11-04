@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>boca</title>
+<meta name="description" content="boca. Cafe, dinners, sonidos and vintage objects, inspired by Colima.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="ink" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="4" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="0.9" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<header class="top">
+  <div class="bar">
+    <nav class="tabs" aria-label="Sections">
+      <button class="tab" type="button" data-tab="home" aria-current="page">BOCA</button>
+      <button class="tab" type="button" data-tab="sonidos">Sonidos</button>
+      <button class="tab" type="button" data-tab="cafe">Cafe</button>
+      <button class="tab" type="button" data-tab="events">Events</button>
+      <button class="tab" type="button" data-tab="ropa">Ropa y Objetos</button>
+      <button class="tab" type="button" data-tab="arte">Arte</button>
+    </nav>
+    <button class="cartbtn" id="openCart" type="button" aria-haspopup="dialog" hidden>Pedido (<span id="cartCount">0</span>)</button>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="panel" data-panel="home">
+    <div class="home">
+      <div>
+        <h1 class="wordmark">BOCA</h1>
+        <div class="home-actions">
+          <button class="link-btn" type="button" data-go="cafe">Order to go</button>
+          <button class="link-btn" type="button" data-go="events">Reserve dinner</button>
+        </div>
+        <div class="hours-block">
+          <p class="eyebrow">Hours / Horas</p>
+          <dl class="hours">
+            <div><dt>Monday</dt><dd>Closed</dd></div>
+            <div><dt>Tuesday</dt><dd>Closed</dd></div>
+            <div><dt>Wednesday</dt><dd>Closed</dd></div>
+            <div><dt>Thursday</dt><dd>Closed</dd></div>
+            <div><dt>Friday</dt><dd>6&ndash;11 PM</dd></div>
+            <div><dt>Saturday</dt><dd>9 AM&ndash;4 PM, 6&ndash;11 PM</dd></div>
+            <div><dt>Sunday</dt><dd>9 AM&ndash;4 PM</dd></div>
+          </dl>
+        </div>
+      </div>
+      <div class="home-mark" role="img" aria-label="Two dancing dogs, a ceramic figure from Colima"></div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="sonidos" hidden>
+    <div class="head">
+      <h2 class="page-title">Pronto</h2>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="cafe" hidden>
+    <div class="head">
+      <h2 class="page-title">Cafe</h2>
+      <p class="lede">Order ahead for pickup, Saturday and Sunday, 9 AM to 4 PM. Tap a drink to add it, pay when you pick up.</p>
+    </div>
+    <div class="scanwrap">
+      <div class="scan">
+        <article class="sheet" aria-label="Cafe menu">
+          <div class="sheet-print" aria-hidden="true"></div>
+          <div class="sheet-ink">
+            <header class="m-head">
+              <h3 class="m-title">BOCA</h3>
+            </header>
+            <div id="menuBody"></div>
+          </div>
+          <div class="sheet-scan" aria-hidden="true"></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="events" hidden>
+    <div class="dinner">
+      <div>
+        <h2 class="page-title">Events</h2>
+        <p class="lede">Dinners hosted at boca. Pick a night and a seating, and tell us about allergies or an occasion.</p>
+        <ul class="facts">
+          <li><span>Seatings</span><span>6:00 to 9:30 PM</span></li>
+          <li><span>Open</span><span>Friday and Saturday</span></li>
+          <li><span>Party size</span><span>1 to 8 guests</span></li>
+        </ul>
+      </div>
+      <div>
+        <form id="resForm" novalidate>
+          <div class="field"><label for="rName">Name</label><input id="rName" type="text" autocomplete="name"></div>
+          <div class="two">
+            <div class="field"><label for="rPhone">Phone</label><input id="rPhone" type="tel" autocomplete="tel"></div>
+            <div class="field"><label for="rEmail">Email<span>optional</span></label><input id="rEmail" type="email" autocomplete="email"></div>
+          </div>
+          <div class="two">
+            <div class="field"><label for="rDate">Date</label><select id="rDate"></select></div>
+            <div class="field">
+              <span class="label" id="partyLbl">Guests</span>
+              <div class="stepper" role="group" aria-labelledby="partyLbl">
+                <button type="button" id="pMinus" aria-label="Fewer guests">&minus;</button>
+                <output id="pVal" aria-live="polite">2</output>
+                <button type="button" id="pPlus" aria-label="More guests">+</button>
+              </div>
+            </div>
+          </div>
+          <fieldset class="field"><legend>Seating</legend><div class="chips" id="slots"></div></fieldset>
+          <div class="field"><label for="rNote">Allergies or occasion<span>optional</span></label><textarea id="rNote" rows="2" maxlength="300"></textarea></div>
+          <p class="err" id="resErr" role="alert"></p>
+          <button class="btn" type="submit" id="resBtn" style="align-self:flex-start">Request table</button>
+        </form>
+        <div class="outcome" id="resOutcome" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" data-panel="ropa" hidden>
+    <div class="head">
+      <h2 class="page-title" id="ropaTitle">Pronto</h2>
+      <p class="lede" id="ropaLede" hidden>Vintage clothing and objects. One of each. Ask us to hold a piece and pay when you pick it up.</p>
+    </div>
+    <div class="holdbox" id="holdBox" hidden>
+      <form id="holdForm" novalidate>
+        <p class="eyebrow">Hold request</p>
+        <h3 id="holdTitle" style="font-size:22px;font-weight:500"></h3>
+        <div class="field"><label for="hName">Name</label><input id="hName" type="text" autocomplete="name"></div>
+        <div class="field"><label for="hPhone">Phone</label><input id="hPhone" type="tel" autocomplete="tel"></div>
+        <div class="field"><label for="hNote">Note<span>optional</span></label><textarea id="hNote" rows="2" maxlength="300"></textarea></div>
+        <p class="err" id="holdErr" role="alert"></p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn" type="submit" id="holdBtn">Request hold</button>
+          <button class="btn ghost" type="button" id="holdCancel">Cancel</button>
+        </div>
+      </form>
+      <div class="outcome" id="holdOutcome" hidden></div>
+    </div>
+    <div class="pieces" id="pieces" hidden></div>
+  </section>
+
+  <section class="panel" data-panel="arte" hidden>
+    <div class="head">
+      <h2 class="page-title" id="arteTitle">Pronto</h2>
+      <p class="lede" id="arteLede" hidden></p>
+    </div>
+    <div class="art-grid" id="artGrid" hidden></div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">&copy; 2026 BOCA</div>
+</footer>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Artwork" hidden>
+  <button class="lb-close" id="lbClose" type="button">Close</button>
+  <figure class="lb-fig">
+    <img id="lbImg" alt="">
+    <figcaption class="lb-cap" id="lbCap"></figcaption>
+  </figure>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="cart" role="dialog" aria-modal="true" aria-labelledby="cartTitle" aria-hidden="true">
+  <div class="dh"><h2 id="cartTitle">Your order</h2><button class="x" id="closeCart" type="button">Close</button></div>
+  <div class="db" id="cartMain">
+    <p class="empty" id="emptyMsg">Nothing here yet. Add something from the menu.</p>
+    <ul class="lines" id="lines"></ul>
+    <form id="orderForm" novalidate hidden>
+      <div>
+        <div class="tot"><span>Subtotal</span><span class="price" id="sub">$0.00</span></div>
+        <p class="muted small">Pay when you pick up. Tax is added then.</p>
+      </div>
+      <h3>Pickup</h3>
+      <div class="field"><label for="oName">Name</label><input id="oName" type="text" autocomplete="name"></div>
+      <div class="field"><label for="oPhone">Phone</label><input id="oPhone" type="tel" autocomplete="tel"></div>
+      <div class="two">
+        <div class="field"><label for="oDate">Day</label><select id="oDate"></select></div>
+        <div class="field"><label for="oTime">Time</label><select id="oTime"></select></div>
+      </div>
+      <div class="field"><label for="oNote">Note<span>optional</span></label><textarea id="oNote" rows="2" maxlength="300"></textarea></div>
+      <p class="err" id="orderErr" role="alert"></p>
+      <button class="btn" type="submit" id="orderBtn">Place order</button>
+    </form>
+  </div>
+  <div class="db" id="cartDone" hidden></div>
+</aside>
+
+<script src="app.js"></script>
+</body>
+</html>
