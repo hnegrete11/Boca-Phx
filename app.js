@@ -27,8 +27,19 @@
      img is a file name inside ART_FOLDER, for example 'painting-01.jpg'. Use ART_FOLDER = '' if the images sit at the top level.
      INQUIRY_EMAIL is where "Inquire" emails go. Leave it empty to hide the inquiry links. */
   var INQUIRY_EMAIL = '';
-  var ART_FOLDER = 'assets/';
-  var ART = [];
+  var ART_FOLDER = 'fotos/';
+  /* Square photos. plain: true shows just the picture. href makes a tile a link instead of opening larger.
+     Name each file in the fotos folder exactly as below (.png; .jpg, .jpeg and .webp also work). */
+  var ART = [
+    { id: 'ca', title: 'CA', img: 'CA.png', plain: true },
+    { id: 'volcan', title: 'Volcan', img: 'Volcan.png', plain: true },
+    { id: 'phx', title: 'PHX', img: 'PHX.png', plain: true },
+    { id: 'colima', title: 'Colima', img: 'Colima.png', plain: true },
+    { id: 'benito', title: 'Benito', img: 'Benito.png', plain: true, href: 'gracias.html' },
+    { id: 'torres', title: 'Torres', img: 'Torres.png', plain: true }
+  ];
+  var ART_PREVIEW = false;
+  var ART_INLINE = {};
   /* Where orders, reservations and hold requests are sent. Paste your form endpoint here, for example
      'https://formspree.io/f/xxxxxxxx'. Leave it empty and the page shows a copy-the-details screen instead. */
   var SUBMIT_URL = 'https://formspree.io/f/xyeeevne';
@@ -94,11 +105,12 @@
     return '<section class="m-sec"><h4 class="m-h">' + esc(s.sec) + '</h4><ul class="m-list" style="padding:0;margin:0">' + s.items.map(rowHTML).join('') + '</ul></section>';
   }).join('');
 
+  var activeKey = null; /* the menu item whose + / - counter is open */
   function addsHTML(it) {
     var opts = it.temps ? TEMPS : [{ k: '', label: 'add' }];
     return opts.map(function (o) {
       var key = it.id + '|' + o.k, q = cart[key] || 0, nm = esc(it.name + (o.k ? ' (' + o.label + ')' : ''));
-      if (!q) return '<button type="button" class="m-btn" data-act="add" data-key="' + key + '" aria-label="Add ' + nm + ' to order">' + o.label + ' +</button>';
+      if (!q || key !== activeKey) return '<button type="button" class="m-btn" data-act="add" data-key="' + key + '" aria-label="Add ' + nm + ' to order' + (q ? ' (' + q + ' in order)' : '') + '"><span class="lbl">' + o.label + ' +' + (q ? ' &times;' + q : '') + '</span></button>';
       return '<span class="m-step" role="group" aria-label="' + nm + ' quantity">' + (o.k ? '<span class="m-opt">' + o.label + '</span>' : '') +
         '<button type="button" data-act="dec" data-key="' + key + '" aria-label="Remove one ' + nm + '">&minus;</button><output>' + q + '</output>' +
         '<button type="button" data-act="inc" data-key="' + key + '" aria-label="Add one ' + nm + '">+</button></span>';
@@ -130,13 +142,19 @@
     var b = e.target.closest('[data-act]');
     if (!b) return;
     var key = b.dataset.key, a = b.dataset.act, inDrawer = !!b.closest('#lines');
+    if (!inDrawer && (a === 'add' || a === 'inc')) activeKey = key;
     if (a === 'add' || a === 'inc') setQty(key, (cart[key] || 0) + 1);
     else if (a === 'dec') setQty(key, (cart[key] || 0) - 1);
     else return;
+    if (!(cart[key] > 0) && activeKey === key) { activeKey = null; sync(); }
     var want = (cart[key] || 0) > 0 ? (a === 'dec' ? 'dec' : 'inc') : 'add';
     var scope = inDrawer ? lines : document.querySelector('.m-row[data-id="' + split(key).id + '"]');
     var t = scope && scope.querySelector('[data-act="' + want + '"][data-key="' + key + '"]');
     if (t) t.focus(); else if (inDrawer) $('#closeCart').focus();
+  });
+
+  document.addEventListener('click', function (e) {
+    if (activeKey && !e.target.closest('.m-step') && !e.target.closest('[data-act="add"]')) { activeKey = null; sync(); }
   });
 
   /* ---------- Drawer ---------- */
@@ -390,7 +408,7 @@
 
   /* ---------- Arte ---------- */
   var STATUS = { available: 'Available', nfs: 'Not for sale', sold: 'Sold' };
-  function artSrc(a) { return /^(https?:|data:|\/)/.test(a.img) ? a.img : ART_FOLDER + a.img; }
+  function artSrc(a) { return ART_INLINE[a.img] || (/^(https?:|data:|\/)/.test(a.img) ? a.img : ART_FOLDER + a.img); }
   function artLine(a) { return [a.artist, a.year, a.medium].filter(Boolean).join(' \u00b7 '); }
   function artStatus(a) {
     var s = STATUS[a.status] || '';
@@ -400,18 +418,35 @@
   function renderArt() {
     var g = $('#artGrid'), has = ART.length > 0, lede = $('#arteLede');
     $('#arteTitle').textContent = has ? 'Arte' : 'Pronto';
-    lede.hidden = !has;
-    if (has) {
-      lede.innerHTML = 'Photographs, paintings and work by artists we collaborate with.' +
-        (INQUIRY_EMAIL ? ' To ask about a piece, write to <a href="mailto:' + esc(INQUIRY_EMAIL) + '">' + esc(INQUIRY_EMAIL) + '</a>.' : '');
+    lede.hidden = !(has && INQUIRY_EMAIL);
+    if (has && INQUIRY_EMAIL) {
+      lede.innerHTML = 'To ask about a piece, write to <a href="mailto:' + esc(INQUIRY_EMAIL) + '">' + esc(INQUIRY_EMAIL) + '</a>.';
     }
     g.hidden = !has;
+    g.className = 'art-grid' + (ART.length && ART.every(function (a) { return a.plain; }) ? ' squares' : '');
     g.innerHTML = ART.map(function (a, i) {
+      if (a.plain) {
+        var tag = a.href ? 'a class="art-open go" href="' + esc(a.href) + '"' : 'button type="button" class="art-open" data-art="' + i + '"';
+        return '<figure class="art"><' + tag + ' aria-label="' + esc(a.href ? a.title : 'View ' + a.title + ' larger') + '">' +
+          '<img src="' + esc(artSrc(a)) + '" alt="' + esc(a.title) + '" data-ext="0" data-base="' + esc(a.img.replace(/\.[a-z]+$/i, '')) + '"></' + (a.href ? 'a' : 'button') + '></figure>';
+      }
       return '<figure class="art"><button type="button" class="art-open" data-art="' + i + '" aria-label="View ' + esc(a.title) + ' larger">' +
         '<img src="' + esc(artSrc(a)) + '" alt="' + esc(a.title + (a.artist ? ', ' + a.artist : '')) + '" loading="lazy"></button>' +
         '<figcaption><span class="t">' + esc(a.title) + '</span>' + (artLine(a) ? '<span class="m">' + esc(artLine(a)) + '</span>' : '') +
         '<span class="m">' + esc(artStatus(a)) + '</span></figcaption></figure>';
     }).join('');
+    // A photo may be saved as .png, .jpg, .jpeg or .webp. A missing one is hidden (shown as a labelled box in the preview).
+    $$('#artGrid img[data-base]').forEach(function (img) {
+      var exts = ['png', 'jpg', 'jpeg', 'webp'];
+      function fail() {
+        var n = Number(img.dataset.ext) + 1;
+        if (n < exts.length) { img.dataset.ext = n; img.src = ART_FOLDER + img.dataset.base + '.' + exts[n]; return; }
+        var fig = img.closest('figure');
+        if (ART_PREVIEW) { fig.innerHTML = '<div class="art-ph">' + esc(img.alt) + '</div>'; } else { fig.remove(); }
+      }
+      img.addEventListener('error', fail);
+      if (img.complete && img.naturalWidth === 0) fail();
+    });
   }
   renderArt();
 
@@ -420,8 +455,9 @@
     var a = ART[i];
     if (!a) return;
     lbFrom = document.activeElement;
-    $('#lbImg').src = artSrc(a); $('#lbImg').alt = a.title;
-    $('#lbCap').innerHTML = '<span class="t">' + esc(a.title) + '</span>' + (artLine(a) ? '<span class="m">' + esc(artLine(a)) + '</span>' : '') +
+    var tile = document.querySelector('[data-art="' + i + '"] img');
+    $('#lbImg').src = tile && tile.src ? tile.src : artSrc(a); $('#lbImg').alt = a.title;
+    $('#lbCap').innerHTML = a.plain ? '' : '<span class="t">' + esc(a.title) + '</span>' + (artLine(a) ? '<span class="m">' + esc(artLine(a)) + '</span>' : '') +
       '<span class="m">' + esc(artStatus(a)) + '</span>' +
       (INQUIRY_EMAIL && a.status !== 'sold' ? '<a class="btn ghost" href="mailto:' + esc(INQUIRY_EMAIL) + '?subject=' + encodeURIComponent('Inquiry: ' + a.title) + '">Inquire about this piece</a>' : '');
     lb.hidden = false;

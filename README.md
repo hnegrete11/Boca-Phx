@@ -6,8 +6,10 @@ A static website: plain HTML, CSS and JavaScript. No build step, no server and n
 index.html     page structure and copy
 styles.css     all styling
 app.js         menu, order to go, dinner reservations, Ropa y Objetos, Arte
+gracias.html   the hidden page (not in the menu)
+qr-*.png       the three payment QR codes for that page
 *.png, *.jpg   the scanned menu paper and the dancing-dogs prints
-assets/        (you create this) your Arte photos and paintings
+fotos/         (you add this) the six Arte photos
 ```
 
 ## Preview on your computer
@@ -53,26 +55,19 @@ A static site cannot receive form submissions by itself. Use a form service that
 
 Until `SUBMIT_URL` is set, customers see a screen with their details to copy, and nothing reaches you. The site takes no payments: orders are paid at pickup.
 
-## Add art to the Arte tab
+## Photos in the Arte tab
 
-Until you add pieces, the tab just says "Pronto".
+The Arte tab shows six square photos. Put them in a folder named `fotos` at the top level of the repository, named exactly like this (capital first letter; `.png` is best, `.jpg`, `.jpeg` and `.webp` also work):
 
-1. Prepare your images as JPEGs, about 1600 pixels on the long side and under about 500 KB each, so the page loads quickly.
-2. Create the folder: in your repository choose Add file, then Create new file, type `assets/.gitkeep` as the file name (typing the slash makes the folder) and commit it.
-3. Open the `assets` folder, choose Add file, then Upload files, and drop your images in.
-4. In `app.js`, set your inquiry email and list each piece:
+`CA.png`, `Volcan.png`, `PHX.png`, `Colima.png`, `Torres.png`, `Benito.png`
 
-   ```js
-   var INQUIRY_EMAIL = 'you@yourdomain.com';
-   var ART = [
-     { id: 'a1', title: 'Untitled', artist: 'Your name', year: '2024', medium: 'Oil on canvas', status: 'available', price: 900, img: 'painting-01.jpg' },
-     { id: 'a2', title: 'Volcan', artist: 'Guest artist', year: '2023', medium: 'Photograph', status: 'nfs', img: 'photo-01.jpg' }
-   ];
-   ```
+To replace a photo, upload a file with the same name. A photo that is missing is simply left out. Tapping a photo opens it larger. Tapping `Benito` (the bill) goes to the hidden page below.
 
-   `status` is `available`, `nfs` (not for sale) or `sold`. Leave `price` out to show "Price on request". If your images sit at the top level instead of in `assets`, set `ART_FOLDER = ''`.
+To add more photos later, add a line to the `ART` list near the top of `app.js`, following the pattern of the existing lines.
 
-Each piece opens larger when clicked, with an "Inquire about this piece" email link. Get permission from guest artists before showing their work, and credit them.
+## The hidden page
+
+`gracias.html` is not linked from the menu. Customers reach it by tapping the bill in Arte, or by scanning the QR code at the stand. Use the address `https://YOUR-DOMAIN/gracias.html`. It opens on the collage, and tapping the bill there shows the three codes. It uses `boca.png`, `dogs.png` and the three `qr-` images from the top level. To change a payment link, edit the three `Open` links in `gracias.html`. Search engines are asked to skip the page, but anyone with the address can open it.
 
 ## Edit the rest
 

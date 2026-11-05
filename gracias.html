@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>BOCA</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap">
+<style>
+  :root { --bg:#fff; --ink:#1d1b19; --muted:#7a756d; --line:#d8d3cb;
+          --font:'Jost','Futura','Century Gothic','Avenir Next',system-ui,sans-serif; color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { position:relative; margin:0; background:var(--bg); color:var(--ink); font-family:var(--font); font-size:15px; line-height:1.5;
+         padding-left:max(16px, env(safe-area-inset-left,0px)); padding-right:max(16px, env(safe-area-inset-right,0px));
+         -webkit-font-smoothing:antialiased; }
+  img { display:block; max-width:100%; height:auto; }
+  .wrap { max-width:1180px; margin:0 auto; padding-block:24px 70px; }
+
+  /* Three rows: top corners + header, the bill in the middle, three images along the bottom. */
+  .back { position:absolute; top:max(12px, env(safe-area-inset-top,0px)); left:max(8px, env(safe-area-inset-left,0px)); z-index:5;
+          width:44px; height:44px; display:grid; place-items:center; color:var(--ink); border:1px solid transparent; border-radius:2px; }
+  .back svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
+  .back:hover, .back:focus-visible { border-color:var(--ink); outline:none; }
+  .stage { display:grid; grid-template-columns: 1fr minmax(230px, 380px) 1fr; column-gap:24px; row-gap:44px; align-items:start; }
+  .art { mix-blend-mode:multiply; pointer-events:none; user-select:none; }
+  .ph { display:grid; place-items:center; border:1px dashed var(--line); color:var(--muted); font-size:11px;
+        letter-spacing:.24em; text-transform:uppercase; text-align:center; padding:8px; }
+
+  .ca     { grid-column:1; grid-row:1; justify-self:start; width:clamp(120px,15vw,185px); margin:36px 0 0 4%; }
+  .volcan { grid-column:3; grid-row:1; justify-self:end;   width:clamp(120px,15vw,190px); margin:0 5% 0 0; }
+  .head   { grid-column:2; grid-row:1; justify-self:center; display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .head .name { width:clamp(110px,13vw,150px); }
+  .head .dogs { width:clamp(66px,8vw,92px); }
+  .head h1 { margin:6px 0 0; font-size:12px; font-weight:700; letter-spacing:.34em; text-transform:uppercase; }
+
+  .pay { grid-column:1 / -1; grid-row:2; justify-self:center; display:flex; flex-direction:column; align-items:center; gap:14px; width:100%; }
+  .bill { appearance:none; background:none; border:0; padding:0; cursor:pointer; font:inherit; color:inherit;
+          display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .bill .art { width:clamp(220px,30vw,360px); pointer-events:none; }
+  .bill .ph { width:clamp(220px,30vw,360px); }
+  .bill .label { font-size:13px; font-weight:700; letter-spacing:.36em; text-transform:uppercase; padding:4px 0 4px .36em;
+                 border-bottom:1px solid transparent; }
+  .bill:hover .label, .bill:focus-visible .label { border-bottom-color:var(--ink); }
+  .bill:focus-visible { outline:none; }
+
+  .codes { display:none; grid-template-columns:repeat(3, minmax(0,200px)); gap:28px; justify-content:center; padding-top:10px; width:100%; }
+  .codes.open { display:grid; animation:rise .25s ease-out; }
+  @keyframes rise { from { opacity:0; transform:translateY(-6px);} to { opacity:1; transform:none; } }
+  .code { display:flex; flex-direction:column; align-items:center; gap:10px; min-width:0; }
+  .code .slot { width:100%; aspect-ratio:1; display:grid; place-items:center; }
+  .code .slot img { width:100%; height:100%; object-fit:contain; }
+  .code b { font-size:13px; font-weight:600; letter-spacing:.24em; text-transform:uppercase; }
+  .code a { color:var(--muted); font-size:12px; letter-spacing:.16em; text-transform:uppercase; text-decoration:none; padding:6px 10px; border:1px solid transparent; }
+  .code a:hover, .code a:focus-visible { border-color:var(--ink); color:var(--ink); outline:none; }
+
+  .phx    { grid-column:1; grid-row:3; justify-self:start; align-self:end; width:clamp(120px,16vw,200px); margin-left:1%; }
+  .torres { grid-column:2; grid-row:3; justify-self:center; align-self:end; width:clamp(210px,30vw,380px); margin-bottom:18px; }
+  .colima { grid-column:3; grid-row:3; justify-self:end; align-self:end; width:clamp(190px,25vw,310px); }
+
+  @media (max-width:720px) {
+    .stage { display:flex; flex-direction:column; align-items:center; gap:26px; }
+    .head { order:1; } .pay { order:2; }
+    .ca { order:3; width:132px; align-self:flex-start; margin:0; }
+    .volcan { order:4; width:132px; align-self:flex-end; margin:-12px 0 0; }
+    .phx { order:5; width:118px; align-self:flex-start; margin:0; }
+    .torres { order:6; width:230px; margin:0; }
+    .colima { order:7; width:230px; align-self:flex-end; margin:0; }
+    .codes { grid-template-columns:minmax(0,220px); gap:30px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .codes.open { animation:none; } }
+</style>
+</head>
+<body>
+<a class="back" href="index.html" aria-label="Back to home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12H5"/><path d="M11 6l-6 6 6 6"/></svg></a>
+<main class="wrap">
+  <section class="stage">
+    <img class="art ca"     data-name="CA"     src="fotos/CA.png"     alt="">
+    <header class="head">
+      <img class="name" src="boca.png" alt="BOCA">
+      <img class="dogs" src="dogs.png" alt="Dancing dogs of Colima">
+      <h1>Gracias</h1>
+    </header>
+    <img class="art volcan" data-name="Volcan" src="fotos/Volcan.png" alt="">
+
+    <div class="pay">
+      <button class="bill" type="button" aria-expanded="false" aria-controls="codes">
+        <img class="art" data-name="Benito" src="fotos/Benito.png" alt="">
+        <span class="label">Pay</span>
+      </button>
+      <div class="codes" id="codes">
+        <div class="code"><div class="slot"><img src="qr-venmo.png" alt="Venmo QR code"></div><b>Venmo</b><a href="https://venmo.com/u/Antonio-Torres94" rel="noopener">Open</a></div>
+        <div class="code"><div class="slot"><img src="qr-cash.png" alt="Cash App QR code"></div><b>Cash App</b><a href="https://cash.app/$tonysimba" rel="noopener">Open</a></div>
+        <div class="code"><div class="slot"><img src="qr-apple.png" alt="Apple Cash QR code"></div><b>Apple Cash</b><a href="sms:+16237553736" rel="noopener">Open</a></div>
+      </div>
+    </div>
+
+    <img class="art phx"    data-name="PHX"    src="fotos/PHX.png"    alt="">
+    <img class="art torres" data-name="Torres" src="fotos/Torres.png" alt="">
+    <img class="art colima" data-name="Colima" src="fotos/Colima.png"       alt="">
+  </section>
+</main>
+<script>
+  // Your photos live in fotos/ and are named CA, Volcan, Benito, PHX, Torres, Colima.
+  // The page tries .png, then .jpg, .jpeg, .webp. A missing photo simply doesn't show.
+  var EXT = ['png', 'jpg', 'jpeg', 'webp'];
+  var PREVIEW = false;
+  document.querySelectorAll('img[data-name]').forEach(function (img) {
+    var name = img.getAttribute('data-name'), i = 0;
+    function fail() {
+      if (!/^fotos\//.test(img.getAttribute('src') || '')) return;
+      i++;
+      if (i < EXT.length) { img.src = 'fotos/' + name + '.' + EXT[i]; return; }
+      if (PREVIEW) { var d = document.createElement('div'); d.className = img.className.replace('art', 'ph') + ' ph';
+        d.style.aspectRatio = name === 'Torres' || name === 'Benito' ? '2.4 / 1' : name === 'PHX' ? '1 / 1.6' : '1 / 1';
+        d.textContent = name; img.replaceWith(d); }
+      else img.remove();
+    }
+    img.addEventListener('error', fail);
+    if (img.complete && img.naturalWidth === 0) fail();
+  });
+  var bill = document.querySelector('.bill'), codes = document.getElementById('codes');
+  bill.addEventListener('click', function () {
+    var open = codes.classList.toggle('open');
+    bill.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) codes.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+  // Arriving from the Arte bill (gracias.html#open) shows the codes right away.
+  if (location.hash === '#open') { codes.classList.add('open'); bill.setAttribute('aria-expanded', 'true'); }
+</script>
+</body>
+</html>
