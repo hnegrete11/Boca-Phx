@@ -5,7 +5,7 @@ A static website: plain HTML, CSS and JavaScript. No build step, no server and n
 ```
 index.html     page structure and copy
 styles.css     all styling
-app.js         menu, order to go, dinner reservations, Ropa y Objetos, Arte
+app.js         menu, order to go, inquiries, Ropa y Objetos, Arte
 gracias.html   the hidden page (not in the menu)
 qr-*.png       the three payment QR codes for that page
 *.png, *.jpg   the scanned menu paper and the dancing-dogs prints
@@ -40,7 +40,7 @@ To update the site later, replace or edit a file in the repository. Pages republ
 
 GitHub's current instructions: https://docs.github.com/pages/configuring-a-custom-domain-for-your-github-pages-site
 
-## Make orders and reservations reach you
+## Make orders, inquiries and hold requests reach you
 
 A static site cannot receive form submissions by itself. Use a form service that emails you each one, such as Formspree (formspree.io):
 
@@ -51,7 +51,7 @@ A static site cannot receive form submissions by itself. Use a form service that
    var SUBMIT_URL = 'https://formspree.io/f/xxxxxxxx';
    ```
 
-3. Place a test order and a test reservation on the live site and confirm both emails arrive.
+3. Send a test inquiry (and a test order, if ordering is on) on the live site and confirm both emails arrive.
 
 Until `SUBMIT_URL` is set, customers see a screen with their details to copy, and nothing reaches you. The site takes no payments: orders are paid at pickup.
 
@@ -74,9 +74,9 @@ To add more photos later, add a line to the `ART` list near the top of `app.js`,
 All of these are near the top of `app.js`:
 
 - **Menu and prices:** the `MENU` list. `temps: true` offers caliente and frio buttons.
-- **To-go days and times:** `TOGO`. Days are numbers (Sunday is 0, Saturday is 6). Times are minutes after midnight, so 9 AM is 540 and 4 PM is 960.
-- **Dinner nights and seatings:** `DINNER`, in the same format.
-- **Hours on the home page:** the "Hours / Horas" list in `index.html`. Keep it in step with `TOGO` and `DINNER`.
+- **To-go days and times:** `TOGO`. Days are numbers (Sunday is 0, Saturday is 6). Times are minutes after midnight, so 8 AM is 480 and 12 PM is 720.
+- **Menu only, or ordering:** `ORDERING` in `app.js`. It is `false` now, so the Cafe tab just shows the menu. Set it to `true` to bring back the + buttons, the order drawer and the "Order to go" link.
+- **Hours on the home page:** the "Hours / Horas" list in `index.html`. Keep it in step with `TOGO`.
 - **Ropa y Objetos:** the `PIECES` list. Until it has at least one piece, the page says "Pronto". Visitors can ask to hold a piece and pay at pickup.
 - **Sonidos:** currently "Pronto". Edit that section in `index.html`.
 

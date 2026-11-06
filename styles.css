@@ -99,12 +99,14 @@ button { cursor: pointer; }
   min-height: clamp(780px, 170vw, 1090px);
   clip-path: polygon(0.3% 0.2%, 38% 0, 71% 0.25%, 99.6% 0, 100% 38%, 99.7% 71%, 100% 99.8%, 62% 100%, 31% 99.7%, 0.2% 100%, 0 64%, 0.3% 30%);
   color: var(--paper-ink);
+  --paper-ink: #3a3430;
 }
 .sheet-print {
   position: absolute; left: 50%; bottom: 5%; width: min(66%, 400px); aspect-ratio: 316 / 447; transform: translateX(-50%) rotate(2deg);
   background: var(--dogs-wm) center / contain no-repeat; mix-blend-mode: multiply; opacity: 0.4; pointer-events: none; z-index: 0;
 }
-.sheet-ink { position: relative; z-index: 1; filter: url(#ink); }
+.sheet-ink { position: relative; z-index: 1; filter: url(#ink); mix-blend-mode: multiply; }
+#menuBody { filter: url(#grain); }
 .sheet-scan { position: absolute; inset: 0; background: var(--scan) center / 100% 100% no-repeat; pointer-events: none; z-index: 2; }
 
 .m-head { display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; padding-bottom: clamp(26px, 5vw, 40px); }

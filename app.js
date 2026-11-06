@@ -6,15 +6,18 @@
   var TEMPS = [{ k: 'hot', label: 'caliente' }, { k: 'iced', label: 'fr\u00edo' }];
   var MENU = [
     { sec: 'Lattes', items: [
-      { id: 'honey',     name: 'Honey latte',            price: 5.5, temps: true },
-      { id: 'mascabado', name: 'Mascabado latte', price: 5.5, temps: true, note: 'piloncillo, cinnamon' },
+      { id: 'honey',     name: 'Honey latte',            price: 5.25, temps: true },
+      { id: 'mascabado', name: 'Piloncillo latte',      price: 5.25, temps: true, note: 'piloncillo, cinnamon' },
       { id: 'horchata',  name: 'Horchata latte',         price: 6,   temps: true, note: 'homemade horchata' },
-      { id: 'matcha',    name: 'Matcha w/ vanilla foam', price: 6.5, temps: true, note: 'ceremonial matcha' }
+      { id: 'matcha',    name: 'Matcha w/ vanilla foam', price: 6, temps: true, note: 'ceremonial matcha' }
     ] },
     { sec: 'Frescas', items: [
       { id: 'jamaica', name: 'Jamaica',               price: 4.5 },
       { id: 'tejuino', name: 'Tejuino estilo Colima', price: 5 },
-      { id: 'horchata-agua', name: 'Horchata',          price: 4.5, note: 'homemade' }
+      { id: 'horchata-agua', name: 'Horchata',          price: 5, note: 'homemade' }
+    ] },
+    { sec: 'Pan', items: [
+      { id: 'concha', name: 'Concha', price: 3.5 }
     ] },
     { sec: 'Comida', items: [
       { id: 'tamal', name: 'Tamales', price: 4.5, unit: 'each', note: 'rojo de pollo' }
@@ -40,11 +43,12 @@
   ];
   var ART_PREVIEW = false;
   var ART_INLINE = {};
-  /* Where orders, reservations and hold requests are sent. Paste your form endpoint here, for example
+  /* Set ORDERING to true to turn on to-go ordering again (the + buttons, the order drawer and the Order to go link). */
+  var ORDERING = false;
+  /* Where orders, inquiries and hold requests are sent. Paste your form endpoint here, for example
      'https://formspree.io/f/xxxxxxxx'. Leave it empty and the page shows a copy-the-details screen instead. */
   var SUBMIT_URL = 'https://formspree.io/f/xyeeevne';
-  var TOGO = { days: [0, 6], open: 540, close: 960, step: 15, lead: 20, horizon: 7 };
-  var DINNER = { days: [5, 6], slots: [1080, 1110, 1140, 1170, 1200, 1230, 1260, 1290], horizon: 21, lead: 60, maxParty: 8, defaultSlot: 1140 };
+  var TOGO = { days: [0, 6], open: 480, close: 720, step: 15, lead: 20, horizon: 7 };
 
   /* ---------- Helpers ---------- */
   var DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -65,7 +69,7 @@
   function isToday(d) { return iso(d) === iso(new Date()); }
 
   /* ---------- Tabs ---------- */
-  var TABS = ['home', 'sonidos', 'cafe', 'events', 'ropa', 'arte'];
+  var TABS = ['home', 'sonidos', 'cafe', 'inquiries', 'ropa', 'arte'];
   function showTab(t, remember) {
     if (TABS.indexOf(t) < 0) t = 'home';
     $$('.panel').forEach(function (p) { p.hidden = p.dataset.panel !== t; });
@@ -73,7 +77,10 @@
     if (remember) { try { history.replaceState(null, '', '#' + t); } catch (e) {} window.scrollTo(0, 0); }
   }
   $$('.tab').forEach(function (b) { b.addEventListener('click', function () { showTab(b.dataset.tab, true); }); });
-  $$('[data-go]').forEach(function (b) { b.addEventListener('click', function () { showTab(b.dataset.go, true); }); });
+  $$('[data-go]').forEach(function (b) { b.addEventListener('click', function () {
+    if (b.dataset.topic) { var sel = $('#iTopic'); if (sel) sel.value = b.dataset.topic; }
+    showTab(b.dataset.go, true);
+  }); });
   var startHash = ''; try { startHash = (location.hash || '').replace('#', ''); } catch (e) {}
   showTab(startHash, false);
 
@@ -122,12 +129,20 @@
       '<button type="button" data-act="inc" data-key="' + key + '" aria-label="Add one ' + n + '">+</button></div>';
   }
 
+  if (!ORDERING) {
+    cart = {};
+    var goBtn = $('[data-go="cafe"]'); if (goBtn) goBtn.textContent = 'Menu';
+  } else {
+    $('#cafeLede').hidden = false;
+    $('#cafeLede').textContent = 'Order ahead for pickup, Saturday and Sunday, 8 AM to 12 PM. Tap a drink to add it, pay when you pick up.';
+    var goBtn2 = $('[data-go="cafe"]'); if (goBtn2) goBtn2.textContent = 'Order to go';
+  }
   var lines = $('#lines'), orderForm = $('#orderForm');
   function sync() {
     $('#cartCount').textContent = count();
-    $('#openCart').hidden = count() === 0;
+    $('#openCart').hidden = !ORDERING || count() === 0;
     $('#openCart').setAttribute('aria-label', 'Open order, ' + count() + ' items');
-    $$('.m-row').forEach(function (row) { row.querySelector('.m-adds').innerHTML = addsHTML(byId[row.dataset.id]); });
+    if (ORDERING) $$('.m-row').forEach(function (row) { row.querySelector('.m-adds').innerHTML = addsHTML(byId[row.dataset.id]); });
     lines.innerHTML = Object.keys(cart).map(function (key) {
       var m = byId[split(key).id], q = cart[key], n = esc(nameOf(key));
       return '<li class="line"><div class="ln"><span class="n">' + n + '</span><span class="muted small">' + money(m.price) + (m.unit ? ' ' + m.unit : ' each') + '</span></div>' +
@@ -209,8 +224,8 @@
   /* ---------- Sending ---------- */
   function send(kind, doc) {
     if (!SUBMIT_URL) return Promise.resolve('offline');
-    var title = kind === 'orders' ? 'order' : kind === 'reservations' ? 'dinner reservation' : 'hold request';
-    var text = kind === 'orders' ? orderText(doc) : kind === 'reservations' ? resText(doc) : holdText(doc);
+    var title = kind === 'orders' ? 'order' : kind === 'inquiries' ? 'inquiry' : 'hold request';
+    var text = kind === 'orders' ? orderText(doc) : kind === 'inquiries' ? inqText(doc) : holdText(doc);
     var payload = { _subject: 'boca ' + title + ' ' + doc.code, type: title, code: doc.code, name: doc.name, phone: doc.phone, message: text };
     if (doc.email) payload.email = doc.email;
     return fetch(SUBMIT_URL, {
@@ -226,10 +241,8 @@
       .concat(d.items.map(function (i) { return itemLine(i) + '  ' + money(i.price * i.qty); }))
       .concat(['Subtotal: ' + money(d.subtotal) + ' (pay at pickup)'], d.note ? ['Note: ' + d.note] : []).join('\n');
   }
-  function resText(d) {
-    return ['boca dinner reservation request ' + d.code, 'Name: ' + d.name, 'Phone: ' + d.phone]
-      .concat(d.email ? ['Email: ' + d.email] : [])
-      .concat(['Date: ' + fmtD(fromIso(d.date)) + ' at ' + fmtT(d.time), 'Guests: ' + d.party], d.note ? ['Note: ' + d.note] : []).join('\n');
+  function inqText(d) {
+    return ['boca inquiry ' + d.code, 'About: ' + d.topic, 'Name: ' + d.name, 'Contact: ' + d.contact, 'Message: ' + d.message].join('\n');
   }
   function holdText(d) {
     return ['boca hold request ' + d.code, 'Piece: ' + d.pieceTitle, 'Name: ' + d.name, 'Phone: ' + d.phone].concat(d.note ? ['Note: ' + d.note] : []).join('\n');
@@ -240,19 +253,19 @@
     try { navigator.clipboard.writeText(ta.value).then(done, fallback); } catch (e) { fallback(); }
   }
   function renderOutcome(el, state, d, type) {
-    var text = type === 'order' ? orderText(d) : type === 'res' ? resText(d) : holdText(d), h;
-    var heading = type === 'order' ? 'Order received' : type === 'res' ? 'Request received' : 'Hold requested';
-    var label = type === 'order' ? 'Order' : type === 'res' ? 'Request' : 'Hold';
+    var text = type === 'order' ? orderText(d) : type === 'inq' ? inqText(d) : holdText(d), h;
+    var heading = type === 'order' ? 'Order received' : type === 'inq' ? 'Message received' : 'Hold requested';
+    var label = type === 'order' ? 'Order' : type === 'inq' ? 'Inquiry' : 'Hold';
     if (state === 'ok') {
       h = '<p class="eyebrow">' + label + ' ' + d.code + '</p><h3>' + heading + '</h3><p>' +
         (type === 'order' ? 'Pickup ' + esc(fmtD(fromIso(d.pickupDate))) + ' at ' + esc(fmtT(d.pickupTime)) + '. Pay when you collect.'
-          : type === 'res' ? esc(fmtD(fromIso(d.date))) + ' at ' + esc(fmtT(d.time)) + ', ' + d.party + (d.party === 1 ? ' guest' : ' guests') + '. We will confirm using the contact details you gave.'
+          : type === 'inq' ? 'Thank you. We will reply using the contact details you gave.'
           : esc(d.pieceTitle) + '. We will contact you to arrange pickup and payment.') + '</p><pre>' + esc(text) + '</pre>';
     } else {
       h = '<h3>Not sent</h3><p>This page is not connected to boca yet, so nothing was delivered. Copy the details and send them to boca directly.</p>' +
         '<textarea readonly aria-label="Details to copy">' + esc(text) + '</textarea><button class="btn ghost" type="button" data-copy="1">Copy details</button>';
     }
-    h += '<button class="btn' + (state === 'ok' ? '' : ' ghost') + '" type="button" data-back="' + type + '">' + (type === 'order' ? (state === 'ok' ? 'Done' : 'Back to order') : state === 'ok' ? 'Done' : 'Edit request') + '</button>';
+    h += '<button class="btn' + (state === 'ok' ? '' : ' ghost') + '" type="button" data-back="' + type + '">' + (type === 'order' ? (state === 'ok' ? 'Done' : 'Back to order') : state === 'ok' ? 'Done' : 'Edit message') + '</button>';
     el.innerHTML = h;
     var cb = el.querySelector('[data-copy]');
     if (cb) cb.addEventListener('click', function () { copyFrom(cb, el.querySelector('textarea')); });
@@ -289,65 +302,29 @@
     });
   });
 
-  /* ---------- Reservation ---------- */
-  var party = 2;
-  function dinnerSlots(d) {
-    var min = isToday(d) ? nowMin() + DINNER.lead : 0;
-    return DINNER.slots.filter(function (t) { return t >= min; });
-  }
-  function dinnerDates() {
-    var out = [], today = new Date();
-    for (var i = 0; i <= DINNER.horizon; i++) {
-      var d = addDays(today, i);
-      if (DINNER.days.indexOf(d.getDay()) < 0) continue;
-      if (!dinnerSlots(d).length) continue;
-      out.push({ d: d, i: i });
-    }
-    return out;
-  }
-  function fillSlots() {
-    var wrap = $('#slots'), cur = wrap.querySelector('input:checked'), prev = cur ? Number(cur.value) : DINNER.defaultSlot, v = $('#rDate').value;
-    var slots = v ? dinnerSlots(fromIso(v)) : [];
-    var pick = slots.indexOf(prev) >= 0 ? prev : slots[0];
-    wrap.innerHTML = slots.map(function (t) {
-      return '<label class="chip"><input type="radio" name="rtime" value="' + t + '"' + (t === pick ? ' checked' : '') + '><span>' + fmtT(t) + '</span></label>';
-    }).join('');
-  }
-  $('#rDate').innerHTML = dinnerDates().map(function (x) { return '<option value="' + iso(x.d) + '">' + dayLabel(x.d, x.i) + '</option>'; }).join('');
-  $('#rDate').addEventListener('change', fillSlots);
-  fillSlots();
-  function setParty(n) {
-    party = Math.max(1, Math.min(DINNER.maxParty, n));
-    $('#pVal').textContent = party;
-    $('#pMinus').disabled = party <= 1; $('#pPlus').disabled = party >= DINNER.maxParty;
-  }
-  $('#pMinus').addEventListener('click', function () { setParty(party - 1); });
-  $('#pPlus').addEventListener('click', function () { setParty(party + 1); });
-  setParty(2);
-
-  var resErr = $('#resErr');
-  function resFail(msg, field) { resErr.textContent = msg; if (field) field.focus(); }
-  $('#resForm').addEventListener('submit', function (e) {
+  /* ---------- Inquiries ---------- */
+  var inqErr = $('#inqErr');
+  function inqFail(msg, field) { inqErr.textContent = msg; if (field) field.focus(); }
+  $('#inqForm').addEventListener('submit', function (e) {
     e.preventDefault();
-    resErr.textContent = '';
-    var name = $('#rName').value.trim(), phone = $('#rPhone').value.trim(), email = $('#rEmail').value.trim();
-    var slot = $('#slots input:checked'), date = $('#rDate').value;
-    if (!name) return resFail('Add a name for the reservation.', $('#rName'));
-    if (phone.replace(/\D/g, '').length < 7) return resFail('Add a phone number we can reach.', $('#rPhone'));
-    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return resFail('That email address looks incomplete.', $('#rEmail'));
-    if (!date || !slot) return resFail('Pick a date and a seating.', $('#slots input') || $('#rDate'));
+    inqErr.textContent = '';
+    var name = $('#iName').value.trim(), contact = $('#iContact').value.trim(), msg = $('#iMsg').value.trim();
+    var isEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(contact);
+    if (!name) return inqFail('Add your name.', $('#iName'));
+    if (!isEmail && contact.replace(/\D/g, '').length < 7) return inqFail('Add a phone number or an email we can reach.', $('#iContact'));
+    if (!msg) return inqFail('Write a short message.', $('#iMsg'));
     var doc = {
-      kind: 'reservation', code: code(), status: 'new', createdAt: new Date().toISOString(),
-      name: name, phone: phone, email: email, date: date, time: Number(slot.value), party: party, note: $('#rNote').value.trim().slice(0, 300)
+      kind: 'inquiry', code: code(), status: 'new', createdAt: new Date().toISOString(),
+      name: name, contact: contact, email: isEmail ? contact : '', phone: isEmail ? '' : contact, topic: $('#iTopic').value, message: msg.slice(0, 600)
     };
-    var btn = $('#resBtn'); btn.disabled = true; btn.textContent = 'Sending';
-    send('reservations', doc).then(function (state) {
-      btn.disabled = false; btn.textContent = 'Request table';
-      if (state === 'error') return resFail('That did not go through. Try again in a moment.');
-      renderOutcome($('#resOutcome'), state, doc, 'res');
-      $('#resForm').hidden = true; $('#resOutcome').hidden = false;
-      if (state === 'ok') { $('#resForm').reset(); setParty(2); fillSlots(); }
-      $('#resOutcome').querySelector('button:last-child').focus();
+    var btn = $('#inqBtn'); btn.disabled = true; btn.textContent = 'Sending';
+    send('inquiries', doc).then(function (state) {
+      btn.disabled = false; btn.textContent = 'Send';
+      if (state === 'error') return inqFail('That did not go through. Try again in a moment.');
+      renderOutcome($('#inqOutcome'), state, doc, 'inq');
+      $('#inqForm').hidden = true; $('#inqOutcome').hidden = false;
+      if (state === 'ok') $('#inqForm').reset();
+      $('#inqOutcome').querySelector('button:last-child').focus();
     });
   });
 
@@ -402,7 +379,7 @@
     if (!b) return;
     var t = b.dataset.back;
     if (t === 'order') { if ($('#cartDone').querySelector('.eyebrow')) closeCart(); $('#cartDone').hidden = true; $('#cartMain').hidden = false; }
-    else if (t === 'res') { $('#resOutcome').hidden = true; $('#resForm').hidden = false; $('#rName').focus(); }
+    else if (t === 'inq') { $('#inqOutcome').hidden = true; $('#inqForm').hidden = false; $('#iName').focus(); }
     else { if ($('#holdOutcome').querySelector('.eyebrow')) $('#holdBox').hidden = true; $('#holdOutcome').hidden = true; $('#holdForm').hidden = false; }
   });
 
